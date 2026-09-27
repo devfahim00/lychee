@@ -12,8 +12,8 @@ android {
         applicationId = "com.devfahim00.lychee"
         minSdk = 24
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.3.1"
         vectorDrawables {
             useSupportLibrary = true
         }

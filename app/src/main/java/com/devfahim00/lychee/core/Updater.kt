@@ -4,8 +4,12 @@ import android.content.Context
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 
 /**
  * yt-dlp updater following https://github.com/yt-dlp/yt-dlp#update
@@ -15,7 +19,9 @@ import java.net.URL
  *  - nightly: yt-dlp/yt-dlp-nightly-builds (recommended by yt-dlp for regular users)
  *  - master:  yt-dlp/yt-dlp-master-builds
  *
- * The update replaces the yt-dlp zipapp that is executed by the bundled python.
+ * The "yt-dlp" release asset is a zipapp with a short shebang header prepended
+ * ("#!/usr/bin/env python3\n" + zip data). The updater normalizes it into a
+ * clean zip file so it can be executed by the bundled python interpreter.
  */
 object Updater {
 
@@ -56,8 +62,31 @@ object Updater {
             .edit().putString("ytdlp_version", tag).apply()
     }
 
-    /** Fetch the latest release info for the channel. Returns null when up-to-date check should compare tags. */
+    /**
+     * Fetch the latest release info for the channel.
+     *
+     * Primary: GitHub REST API.
+     * Fallback: the rate-limit-free github.com "releases/latest" redirect,
+     * which works even when the anonymous API quota for the current network
+     * is exhausted (common on shared mobile carrier IPs).
+     */
     fun fetchLatest(channel: String): UpdateInfo {
+        val apiError = try {
+            return fetchLatestViaApi(channel)
+        } catch (e: Exception) {
+            e
+        }
+        return try {
+            fetchLatestViaRedirect(channel)
+        } catch (_: Exception) {
+            throw IOException(
+                "GitHub unreachable (rate limit?) — ${apiError.message ?: "unknown error"}",
+                apiError
+            )
+        }
+    }
+
+    private fun fetchLatestViaApi(channel: String): UpdateInfo {
         val repo = Channels.repo(channel)
         val url = URL("https://api.github.com/repos/$repo/releases/latest")
         val conn = url.openConnection() as HttpURLConnection
@@ -67,7 +96,7 @@ object Updater {
         conn.setRequestProperty("User-Agent", "Lychee-App")
         try {
             if (conn.responseCode !in 200..299) {
-                throw java.io.IOException("GitHub API error ${conn.responseCode}")
+                throw IOException("GitHub API error ${conn.responseCode}")
             }
             val body = conn.inputStream.bufferedReader().use { it.readText() }
             val json = JSONObject(body)
@@ -84,7 +113,40 @@ object Updater {
                     break
                 }
             }
-            return UpdateInfo(channel, tag, name, downloadUrl ?: throw java.io.IOException("yt-dlp asset not found"), size)
+            return UpdateInfo(
+                channel, tag, name,
+                downloadUrl ?: throw IOException("yt-dlp asset not found"),
+                size
+            )
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    /**
+     * Rate-limit-free fallback: "https://github.com/<repo>/releases/latest"
+     * answers with a 302 whose Location header contains the latest tag.
+     */
+    private fun fetchLatestViaRedirect(channel: String): UpdateInfo {
+        val repo = Channels.repo(channel)
+        val conn = URL("https://github.com/$repo/releases/latest").openConnection() as HttpURLConnection
+        conn.instanceFollowRedirects = false
+        conn.connectTimeout = 15000
+        conn.readTimeout = 20000
+        conn.setRequestProperty("User-Agent", "Lychee-App")
+        try {
+            val code = conn.responseCode
+            if (code !in 300..399) {
+                throw IOException("GitHub returned HTTP $code")
+            }
+            val location = conn.getHeaderField("Location")
+            if (location.isNullOrBlank() || !location.contains("/tag/")) {
+                throw IOException("unexpected redirect")
+            }
+            val tag = location.substringAfterLast("/")
+            if (tag.isBlank()) throw IOException("unexpected redirect")
+            val downloadUrl = "https://github.com/$repo/releases/download/$tag/${LycheeRuntime.YTDLP_BIN_NAME}"
+            return UpdateInfo(channel, tag, tag, downloadUrl, 0L)
         } finally {
             conn.disconnect()
         }
@@ -96,7 +158,9 @@ object Updater {
     }
 
     /**
-     * Download and install the given release. Replaces the yt-dlp zipapp atomically.
+     * Download and install the given release. The release asset is
+     * normalized into a clean zipapp, verified by actually running it, and
+     * the previous version is restored if the new one fails to start.
      */
     fun performUpdate(context: Context, info: UpdateInfo, onProgress: (Float) -> Unit = {}): Result<String> {
         return try {
@@ -111,7 +175,7 @@ object Updater {
             conn.setRequestProperty("User-Agent", "Lychee-App")
             try {
                 if (conn.responseCode !in 200..299) {
-                    return Result.failure(java.io.IOException("Download failed: HTTP ${conn.responseCode}"))
+                    return Result.failure(IOException("Download failed: HTTP ${conn.responseCode}"))
                 }
                 val total = if (conn.contentLengthLong > 0) conn.contentLengthLong else info.sizeBytes
                 var downloaded = 0L
@@ -131,35 +195,89 @@ object Updater {
                 conn.disconnect()
             }
 
-            // Sanity check: zipapp must be a zip larger than 1MB starting with PK
-            if (tmp.length() < 1_000_000) {
+            // The release asset carries a shebang header before the zip data;
+            // rewrite it as a clean zipapp and sanity-check its contents.
+            val normalized = File(context.cacheDir, "ytdlp-normalized.pyz")
+            if (normalized.exists()) normalized.delete()
+            if (!normalizeZipapp(tmp, normalized)) {
                 tmp.delete()
-                return Result.failure(java.io.IOException("Downloaded file looks invalid (too small)"))
+                normalized.delete()
+                return Result.failure(IOException("Downloaded release is not a usable yt-dlp archive"))
             }
-            val head = java.io.RandomAccessFile(tmp, "r").use { raf ->
-                val b = ByteArray(2); raf.readFully(b); b
-            }
-            if (!(head[0] == 'P'.code.toByte() && head[1] == 'K'.code.toByte())) {
-                tmp.delete()
-                return Result.failure(java.io.IOException("Downloaded file is not a valid yt-dlp zipapp"))
+            tmp.delete()
+
+            // Swap in with a backup so a broken build can be rolled back
+            val target = LycheeRuntime.ytdlpFile
+            val backup = File(target.parentFile, "yt-dlp.bak")
+            if (backup.exists()) backup.delete()
+            val hadPrevious = target.exists() && target.renameTo(backup)
+            if (!normalized.renameTo(target)) {
+                if (hadPrevious) backup.renameTo(target)
+                return Result.failure(IOException("Failed to replace yt-dlp binary"))
             }
 
-            // Atomic-ish replace
-            val target = LycheeRuntime.ytdlpFile
-            val next = File(target.parentFile, "yt-dlp.next")
-            if (next.exists()) next.delete()
-            java.nio.file.Files.move(
-                tmp.toPath(), next.toPath(),
-                java.nio.file.StandardCopyOption.REPLACE_EXISTING
-            )
-            if (target.exists()) target.delete()
-            if (!next.renameTo(target)) {
-                return Result.failure(java.io.IOException("Failed to replace yt-dlp binary"))
+            // Verify the new zipapp actually starts
+            val versionProbe = runCatching {
+                LycheeRuntime.execute(context, listOf("--no-warnings", "--version"))
+            }.getOrNull()
+            val versionOk = versionProbe != null && versionProbe.exitCode == 0 &&
+                versionProbe.out.isNotBlank()
+            if (!versionOk) {
+                target.delete()
+                if (hadPrevious) backup.renameTo(target)
+                return Result.failure(IOException("Updated yt-dlp failed to start; previous version restored"))
             }
+
+            backup.delete()
             storeVersion(context, info.tag)
             Result.success(info.tag)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Rebuild the downloaded artifact as a clean zip file (starts with "PK").
+     * The release asset is "shebang line + zip", and java.util.zip.ZipFile
+     * locates the archive via its end-of-central-directory record, so the
+     * prepended header is tolerated transparently.
+     */
+    private fun normalizeZipapp(src: File, dest: File): Boolean {
+        return try {
+            ZipFile(src).use { zip ->
+                var hasPackage = false
+                var hasRootMain = false
+                val entries = zip.entries()
+                while (entries.hasMoreElements()) {
+                    val name = entries.nextElement().name
+                    if (name.startsWith("yt_dlp/")) hasPackage = true
+                    if (name == "__main__.py") hasRootMain = true
+                }
+                if (!hasPackage) return false
+
+                ZipOutputStream(FileOutputStream(dest)).use { out ->
+                    val copy = zip.entries()
+                    while (copy.hasMoreElements()) {
+                        val entry = copy.nextElement()
+                        if (entry.isDirectory) continue
+                        out.putNextEntry(ZipEntry(entry.name))
+                        zip.getInputStream(entry).use { it.copyTo(out) }
+                        out.closeEntry()
+                    }
+                    if (!hasRootMain) {
+                        out.putNextEntry(ZipEntry("__main__.py"))
+                        out.write(
+                            ("import sys\n" +
+                                "import yt_dlp\n" +
+                                "sys.exit(yt_dlp.main())\n").toByteArray(Charsets.UTF_8)
+                        )
+                        out.closeEntry()
+                    }
+                }
+            }
+            dest.length() > 1_000_000
+        } catch (_: Exception) {
+            false
         }
     }
 

@@ -29,7 +29,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Cookie
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Restore
@@ -43,6 +45,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,14 +53,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.devfahim00.lychee.core.CookieStore
 import com.devfahim00.lychee.core.Settings
 import com.devfahim00.lychee.core.Updater
+import com.devfahim00.lychee.ui.components.CookieBrowserDialog
 import com.devfahim00.lychee.ui.components.GlassCard
 import com.devfahim00.lychee.ui.components.GlassTextField
 import com.devfahim00.lychee.ui.components.GradientButton
@@ -73,6 +79,7 @@ private enum class Section(
 ) {
     ENGINE("yt-dlp engine", Icons.Filled.SystemUpdate, "Version, updates & components"),
     DOWNLOADS("Download defaults", Icons.Filled.Tune, "Quality, audio format & processing"),
+    COOKIES("Cookies", Icons.Filled.Cookie, "Sign in to websites via built-in browser"),
     IMPERSONATION("Impersonation", Icons.Filled.Security, "Browser fingerprint spoofing"),
     STORAGE("Storage", Icons.Filled.Folder, "Save location & filenames"),
     NETWORK("Network", Icons.Filled.Language, "Proxy & advanced arguments"),
@@ -121,6 +128,11 @@ fun SettingsScreen(vm: AppViewModel) {
                 onBack = { section = null },
                 update = ::update
             )
+            Section.COOKIES -> CookiesPage(
+                settings = settings,
+                onBack = { section = null },
+                update = ::update
+            )
             Section.IMPERSONATION -> ImpersonationPage(
                 settings = settings,
                 onBack = { section = null },
@@ -165,10 +177,13 @@ private fun SettingsRoot(
                     val value = when (s) {
                         Section.ENGINE -> engine.ytdlpVersion.ifBlank { "checking…" }
                         Section.DOWNLOADS -> qualityLabel(settings.videoQualityCap)
+                        Section.COOKIES -> if (settings.cookiesEnabled) {
+                            "${settings.cookiesEnabledDomains.size} sites"
+                        } else "Off"
                         Section.IMPERSONATION -> if (settings.impersonateEnabled) settings.impersonateTarget else "Off"
                         Section.STORAGE -> null
                         Section.NETWORK -> null
-                        Section.ABOUT -> "0.2.0"
+                        Section.ABOUT -> "0.3.0"
                     }
                     SettingsRow(
                         icon = s.icon,
@@ -492,6 +507,143 @@ private fun DownloadsPage(
     }
 }
 
+// ---------------------------------------------------------- cookies page ----
+
+@Composable
+private fun CookiesPage(
+    settings: Settings,
+    onBack: () -> Unit,
+    update: ((Settings) -> Settings) -> Unit
+) {
+    val context = LocalContext.current
+    var showBrowser by remember { mutableStateOf(false) }
+    var savedDomain by remember { mutableStateOf<String?>(null) }
+    var refresh by remember { mutableStateOf(0) }
+    val domains by remember(refresh) {
+        mutableStateOf(CookieStore.listDomains(context))
+    }
+
+    LaunchedEffect(savedDomain) {
+        val domain = savedDomain ?: return@LaunchedEffect
+        savedDomain = null
+        update { it.copy(cookiesEnabledDomains = it.cookiesEnabledDomains + domain) }
+        refresh++
+    }
+
+    SettingsSubPage("Cookies", onBack) {
+        PageSectionLabel("General")
+        Spacer(Modifier.height(8.dp))
+        GlassCard(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ToggleRow(
+                    title = "Use cookies",
+                    subtitle = "Send saved cookies when downloading",
+                    checked = settings.cookiesEnabled,
+                    onChecked = { update { it.copy(cookiesEnabled = !it.cookiesEnabled) } }
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+        PageSectionLabel("Import")
+        Spacer(Modifier.height(8.dp))
+        GlassCard(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "Sign in to a website with the built-in browser, then save its cookies. Needed for sites that require an account or age verification.",
+                    color = TextTertiary,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp
+                )
+                GradientButton(
+                    onClick = { showBrowser = true },
+                    text = "Open browser",
+                    modifier = Modifier.fillMaxWidth(),
+                    leading = { Icon(Icons.Filled.Cookie, null) }
+                )
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+        PageSectionLabel("Websites")
+        Spacer(Modifier.height(8.dp))
+        if (domains.isEmpty()) {
+            GlassCard(Modifier.fillMaxWidth()) {
+                Text(
+                    "No cookies saved yet",
+                    color = TextTertiary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        } else {
+            GlassCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(vertical = 6.dp)) {
+                    domains.forEachIndexed { index, domain ->
+                        val enabled = domain in settings.cookiesEnabledDomains
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Filled.Language, null, tint = TextTertiary, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(domain, color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                val count = CookieStore.countCookies(context, domain)
+                                Text(
+                                    "$count cookies",
+                                    color = TextTertiary,
+                                    fontSize = 11.sp
+                                )
+                            }
+                            Switch(
+                                checked = enabled,
+                                onCheckedChange = { on ->
+                                    update {
+                                        it.copy(
+                                            cookiesEnabledDomains = if (on) {
+                                                it.cookiesEnabledDomains + domain
+                                            } else {
+                                                it.cookiesEnabledDomains - domain
+                                            }
+                                        )
+                                    }
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedTrackColor = LycheePink,
+                                    checkedThumbColor = Color.White
+                                )
+                            )
+                            IconButton(onClick = {
+                                CookieStore.delete(context, domain)
+                                update {
+                                    it.copy(cookiesEnabledDomains = it.cookiesEnabledDomains - domain)
+                                }
+                                refresh++
+                            }) {
+                                Icon(Icons.Filled.Delete, "Delete", tint = TextTertiary, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        if (index != domains.lastIndex) {
+                            SettingsRowDivider()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showBrowser) {
+        CookieBrowserDialog(
+            initialUrl = "https://www.youtube.com",
+            onDismiss = { showBrowser = false },
+            onSaved = { domain -> savedDomain = domain }
+        )
+    }
+}
+
 // ---------------------------------------------------- impersonation page ----
 
 @Composable
@@ -677,7 +829,7 @@ private fun AboutPage(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 InfoRow("Name", "Lychee")
-                InfoRow("Version", "0.2.0")
+                InfoRow("Version", "0.3.0")
                 InfoRow("License", "GPL-3.0")
             }
         }

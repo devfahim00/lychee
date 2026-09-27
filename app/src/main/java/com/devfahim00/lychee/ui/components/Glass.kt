@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -156,6 +157,7 @@ fun GlassTextField(
     singleLine: Boolean = true,
     textStyle: TextStyle = TextStyle(color = TextPrimary, fontSize = 15.sp),
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
     trailing: (@Composable () -> Unit)? = null,
     leading: (@Composable () -> Unit)? = null
 ) {
@@ -167,6 +169,7 @@ fun GlassTextField(
         singleLine = singleLine,
         textStyle = textStyle,
         keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
         cursorBrush = Brush.verticalGradient(listOf(LycheePink, LycheeViolet)),
         decorationBox = { innerTextField ->
             Row(

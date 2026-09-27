@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -30,6 +31,9 @@ data class Settings(
     val subtitleLanguages: String = "en.*",
     val embedSubtitles: Boolean = true,
     val removeSponsorBlock: Boolean = false,
+    // Cookies
+    val cookiesEnabled: Boolean = false,
+    val cookiesEnabledDomains: Set<String> = emptySet(),
     // Impersonation (see https://github.com/yt-dlp/yt-dlp#impersonation)
     val impersonateEnabled: Boolean = false,
     val impersonateTarget: String = "chrome",
@@ -57,6 +61,8 @@ object Prefs {
     private val SUBTITLE_LANGUAGES = stringPreferencesKey("subtitle_languages")
     private val EMBED_SUBTITLES = booleanPreferencesKey("embed_subtitles")
     private val REMOVE_SPONSORBLOCK = booleanPreferencesKey("remove_sponsorblock")
+    private val COOKIES_ENABLED = booleanPreferencesKey("cookies_enabled")
+    private val COOKIES_DOMAINS = stringSetPreferencesKey("cookies_enabled_domains")
     private val IMPERSONATE_ENABLED = booleanPreferencesKey("impersonate_enabled")
     private val IMPERSONATE_TARGET = stringPreferencesKey("impersonate_target")
     private val UPDATE_CHANNEL = stringPreferencesKey("update_channel")
@@ -80,6 +86,8 @@ object Prefs {
         subtitleLanguages = p[SUBTITLE_LANGUAGES] ?: "en.*",
         embedSubtitles = p[EMBED_SUBTITLES] ?: true,
         removeSponsorBlock = p[REMOVE_SPONSORBLOCK] ?: false,
+        cookiesEnabled = p[COOKIES_ENABLED] ?: false,
+        cookiesEnabledDomains = p[COOKIES_DOMAINS] ?: emptySet(),
         impersonateEnabled = p[IMPERSONATE_ENABLED] ?: false,
         impersonateTarget = p[IMPERSONATE_TARGET] ?: "chrome",
         updateChannel = p[UPDATE_CHANNEL] ?: "stable",
@@ -108,6 +116,8 @@ object Prefs {
             p[SUBTITLE_LANGUAGES] = n.subtitleLanguages
             p[EMBED_SUBTITLES] = n.embedSubtitles
             p[REMOVE_SPONSORBLOCK] = n.removeSponsorBlock
+            p[COOKIES_ENABLED] = n.cookiesEnabled
+            p[COOKIES_DOMAINS] = n.cookiesEnabledDomains
             p[IMPERSONATE_ENABLED] = n.impersonateEnabled
             p[IMPERSONATE_TARGET] = n.impersonateTarget
             p[UPDATE_CHANNEL] = n.updateChannel

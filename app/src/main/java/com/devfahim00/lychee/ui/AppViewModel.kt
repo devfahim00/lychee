@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.devfahim00.lychee.core.ArgBuilder
+import com.devfahim00.lychee.core.CookieStore
 import com.devfahim00.lychee.core.DownloadEngine
 import com.devfahim00.lychee.core.DownloadOptions
 import com.devfahim00.lychee.core.InfoParser
@@ -88,8 +89,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val s = settings.value
+                val cookieFile = CookieStore.mergedCookieFile(app, s)
                 val args = mutableListOf<String>()
-                args.addAll(ArgBuilder.baseArgs(app, s))
+                args.addAll(ArgBuilder.baseArgs(app, s, cookieFile))
                 args.addAll(ArgBuilder.infoArgs())
                 args.add(url.trim())
                 val result = LycheeRuntime.execute(app, args)

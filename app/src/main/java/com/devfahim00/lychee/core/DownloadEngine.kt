@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
  */
 object ArgBuilder {
 
-    fun baseArgs(context: Context, settings: Settings): MutableList<String> {
+    fun baseArgs(context: Context, settings: Settings, cookieFile: File? = null): MutableList<String> {
         val args = mutableListOf<String>()
         // Progress one-line-per-update for reliable parsing
         args.add("--newline")
@@ -29,6 +29,11 @@ object ArgBuilder {
         if (LycheeRuntime.qjsBin.exists()) {
             args.add("--js-runtimes")
             args.add("quickjs:${LycheeRuntime.qjsBin.absolutePath}")
+        }
+        // Cookies imported from the built-in browser
+        if (cookieFile != null && cookieFile.exists()) {
+            args.add("--cookies")
+            args.add(cookieFile.absolutePath)
         }
         // Impersonation (must be supported per user requirements)
         if (settings.impersonateEnabled) {
@@ -193,7 +198,7 @@ object DownloadEngine {
         val ctx = appContext ?: return
         updateTask(taskId) { it.copy(status = DownloadStatus.ACTIVE, stage = "Starting") }
         val args = mutableListOf<String>()
-        args.addAll(ArgBuilder.baseArgs(ctx, settings))
+        args.addAll(ArgBuilder.baseArgs(ctx, settings, CookieStore.mergedCookieFile(ctx, settings)))
         args.addAll(ArgBuilder.downloadArgs(settings, options))
         args.add("--no-cache-dir")
         args.add(options.url)

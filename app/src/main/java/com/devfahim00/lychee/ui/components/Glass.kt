@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
@@ -76,12 +77,14 @@ fun GlassCard(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 24.dp,
     specular: Boolean = true,
+    baseColor: Color = Color.Transparent,
     content: @Composable BoxScope.() -> Unit
 ) {
     val shape = RoundedCornerShape(cornerRadius)
     Box(
         modifier = modifier
             .clip(shape)
+            .background(baseColor)
             .background(GlassFillBrush)
             .border(1.dp, GlassBorderBrush, shape)
     ) {
@@ -127,6 +130,7 @@ fun GradientButton(
             containerColor = Color.Transparent,
             contentColor = Color.White
         ),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
         modifier = modifier
             .background(if (enabled) gradient else disabledGradient, shape)
             .border(1.dp, Color.White.copy(alpha = 0.35f), shape)
@@ -135,7 +139,9 @@ fun GradientButton(
         Text(
             text = text,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.3.sp
+            letterSpacing = 0.3.sp,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }

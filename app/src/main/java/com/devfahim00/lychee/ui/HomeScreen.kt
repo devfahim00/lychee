@@ -55,7 +55,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.devfahim00.lychee.R
@@ -77,7 +76,6 @@ fun HomeScreen(vm: AppViewModel, sharedUrl: String?) {
     val clipboard = LocalClipboardManager.current
     val fetchState by vm.fetchState.collectAsState()
     val tasks by vm.tasks.collectAsState()
-    val engineStatus by vm.engineStatus.collectAsState()
 
     var url by remember { mutableStateOf("") }
     var showSheet by remember { mutableStateOf(false) }
@@ -120,15 +118,7 @@ fun HomeScreen(vm: AppViewModel, sharedUrl: String?) {
                 )
             }
             Spacer(Modifier.width(14.dp))
-            Column {
-                BrandText("Lychee", 30)
-                Text(
-                    "glassy • yt-dlp powered",
-                    color = TextTertiary,
-                    fontSize = 12.sp,
-                    letterSpacing = 1.sp
-                )
-            }
+            BrandText("Lychee", 30)
         }
 
         Spacer(Modifier.height(20.dp))
@@ -260,70 +250,30 @@ fun HomeScreen(vm: AppViewModel, sharedUrl: String?) {
                         },
                         enabled = url.isNotBlank() && fetchState !is FetchState.Loading,
                         text = "Quick",
-                        modifier = Modifier.weight(0.45f),
+                        modifier = Modifier.weight(0.55f),
                         leading = { Icon(Icons.Filled.Download, null, modifier = Modifier.size(18.dp)) }
                     )
                 }
             }
         }
 
-        // Impersonation status chip
-        Spacer(Modifier.height(12.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val impStatus = engineStatus.impersonationAvailable
-            Box(
-                Modifier
-                    .size(8.dp)
-                    .background(
-                        when (impStatus) {
-                            true -> Color(0xFF5EE6A8)
-                            false -> Color(0xFFFF6B81)
-                            null -> Color(0xFF9A8FB0)
-                        },
-                        CircleShape
-                    )
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                when (impStatus) {
-                    true -> "Impersonation ready (curl_cffi)"
-                    false -> "Impersonation unavailable"
-                    null -> "Engine warming up…"
-                },
-                color = TextTertiary,
-                fontSize = 12.sp
-            )
-        }
-
         // Active downloads preview
         if (activeTasks.isNotEmpty()) {
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(20.dp))
             Text(
-                "ACTIVE DOWNLOADS",
-                color = TextTertiary,
-                fontSize = 11.sp,
-                letterSpacing = 1.6.sp,
-                fontWeight = FontWeight.Medium
+                "Active downloads",
+                color = TextSecondary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             activeTasks.take(3).forEach { task ->
                 MiniTaskRow(task)
                 Spacer(Modifier.height(8.dp))
             }
         }
 
-        // Hint footer
-        Spacer(Modifier.height(18.dp))
-        Text(
-            "Lychee bundles yt-dlp with ffmpeg, QuickJS (EJS) and curl_cffi impersonation.\nKeep yt-dlp updated from Settings — extractors break often.",
-            color = Color(0x66C9BEDA),
-            fontSize = 11.sp,
-            lineHeight = 16.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp)
-        )
+        Spacer(Modifier.height(24.dp))
     }
 
     if (showSheet) {

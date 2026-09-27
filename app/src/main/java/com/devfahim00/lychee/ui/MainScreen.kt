@@ -105,7 +105,7 @@ private fun GlassBottomBar(
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(26.dp))
-            .background(Color(0x80161126))
+            .background(Color(0xD9161126))
             .border(
                 1.dp,
                 Brush.verticalGradient(

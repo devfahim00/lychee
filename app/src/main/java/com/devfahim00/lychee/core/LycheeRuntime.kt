@@ -226,7 +226,8 @@ object LycheeRuntime {
         }
 
         val canceled = processId != null && !idProcessMap.containsKey(processId)
-        idProcessMap.remove(processId)
+        // ConcurrentHashMap forbids null keys — only clean up when a process id was given
+        if (processId != null) idProcessMap.remove(processId)
 
         return ExecResult(
             exitCode = exitCode,

@@ -113,7 +113,7 @@ fun DownloadsScreen(vm: AppViewModel) {
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Paste a link on the Home tab to start\nyour first download 🍒",
+                    "Downloads you start will appear here",
                     color = TextTertiary,
                     fontSize = 13.sp,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -288,7 +288,7 @@ private fun TaskCard(
 @Composable
 private fun LogDialog(task: DownloadTask, onDismiss: () -> Unit) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        GlassCard(Modifier.fillMaxWidth(), cornerRadius = 24.dp) {
+        GlassCard(Modifier.fillMaxWidth(), cornerRadius = 24.dp, baseColor = Color(0xF7181328)) {
             Column(Modifier.padding(18.dp)) {
                 Text(
                     "Log — ${task.title.ifBlank { task.url }}",

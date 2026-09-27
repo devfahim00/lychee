@@ -83,7 +83,7 @@ fun FormatSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = Color(0xE6161126),
+        containerColor = Color(0xF7161126),
         dragHandle = {
             Box(
                 Modifier

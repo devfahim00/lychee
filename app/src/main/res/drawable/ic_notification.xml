@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Lychee glyph (white, for notifications) -->
+    <path
+        android:pathData="M12,5.5 C16.1,5.5 19,8.5 19,12.2 C19,16 16.1,18.9 12,18.9 C7.9,18.9 5,16 5,12.2 C5,8.5 7.9,5.5 12,5.5 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M11.9,6.4 C11.9,4.9 12.7,3.5 14.4,2.6 C15.3,4.1 15,6 13.2,7 C12.4,7.4 11.9,7 11.9,6.4 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M11.6,6.6 C11,5.4 9.8,4.6 8.4,4.6 C8.6,6 9.8,7.1 11.2,7.1 C11.6,7.1 11.8,6.9 11.6,6.6 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M9,11 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0"
+        android:fillColor="#B3FF5C8A" />
+    <path
+        android:pathData="M14,10 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0"
+        android:fillColor="#B3FF5C8A" />
+    <path
+        android:pathData="M11,14.5 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0"
+        android:fillColor="#B3FF5C8A" />
+    <path
+        android:pathData="M15,14 m-1,0 a1,1 0 1,1 2,0 a1,1 0 1,1 -2,0"
+        android:fillColor="#B3FF5C8A" />
+</vector>

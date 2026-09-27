@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lychee</string>
+    <string name="home">Home</string>
+    <string name="downloads">Downloads</string>
+    <string name="settings">Settings</string>
+    <string name="paste">Paste</string>
+    <string name="download">Download</string>
+    <string name="url_hint">Paste a video or audio link</string>
+    <string name="fetch_formats">Fetch formats</string>
+    <string name="notification_channel_downloads">Downloads</string>
+    <string name="notification_channel_downloads_desc">Shows download progress and results</string>
+    <string name="downloading_notification">Downloading</string>
+    <string name="download_complete">Download complete</string>
+    <string name="download_failed">Download failed</string>
+    <string name="impersonation">Impersonation</string>
+    <string name="ytdlp_section">yt-dlp engine</string>
+</resources>

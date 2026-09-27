@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Lychee body -->
+    <path
+        android:pathData="M54,32 C68.3,32 80,43.7 80,58 C80,72.3 68.3,84 54,84 C39.7,84 28,72.3 28,58 C28,43.7 39.7,32 54,32 Z"
+        android:fillColor="#FF5C8A" />
+
+    <!-- Body clip for interior details -->
+    <clip-path
+        android:pathData="M54,32 C68.3,32 80,43.7 80,58 C80,72.3 68.3,84 54,84 C39.7,84 28,72.3 28,58 C28,43.7 39.7,32 54,32 Z" />
+
+    <!-- Bottom shading -->
+    <path
+        android:pathData="M24,64 C30,82 46,90 62,87 C74,84.5 82,76 84,64 C82,78 70,90 52,90 C38,90 27,78 24,64 Z"
+        android:fillColor="#33D63A6E" />
+
+    <!-- Bumpy lychee texture -->
+    <path
+        android:pathData="M44,48 m-2.6,0 a2.6,2.6 0 1,1 5.2,0 a2.6,2.6 0 1,1 -5.2,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M58,44 m-2.4,0 a2.4,2.4 0 1,1 4.8,0 a2.4,2.4 0 1,1 -4.8,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M66,56 m-2.6,0 a2.6,2.6 0 1,1 5.2,0 a2.6,2.6 0 1,1 -5.2,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M47,64 m-2.4,0 a2.4,2.4 0 1,1 4.8,0 a2.4,2.4 0 1,1 -4.8,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M60,71 m-2.6,0 a2.6,2.6 0 1,1 5.2,0 a2.6,2.6 0 1,1 -5.2,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M40,58 m-2.2,0 a2.2,2.2 0 1,1 4.4,0 a2.2,2.2 0 1,1 -4.4,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M53,55 m-2.2,0 a2.2,2.2 0 1,1 4.4,0 a2.2,2.2 0 1,1 -4.4,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M64,66 m-2.0,0 a2.0,2.0 0 1,1 4.0,0 a2.0,2.0 0 1,1 -4.0,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M44,72 m-2.0,0 a2.0,2.0 0 1,1 4.0,0 a2.0,2.0 0 1,1 -4.0,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M36,50 m-2.0,0 a2.0,2.0 0 1,1 4.0,0 a2.0,2.0 0 1,1 -4.0,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M55,76 m-2.2,0 a2.2,2.2 0 1,1 4.4,0 a2.2,2.2 0 1,1 -4.4,0"
+        android:fillColor="#E84677" />
+    <path
+        android:pathData="M69,47 m-2.0,0 a2.0,2.0 0 1,1 4.0,0 a2.0,2.0 0 1,1 -4.0,0"
+        android:fillColor="#E84677" />
+
+    <!-- Specular highlight -->
+    <path
+        android:pathData="M44,46 m-6,0 a6,6 0 1,1 12,0 a6,6 0 1,1 -12,0"
+        android:fillColor="#66FFFFFF" />
+    <path
+        android:pathData="M52,41 m-2.6,0 a2.6,2.6 0 1,1 5.2,0 a2.6,2.6 0 1,1 -5.2,0"
+        android:fillColor="#4DFFFFFF" />
+
+    <!-- Stem -->
+    <path
+        android:pathData="M53,35 C53,30 55,26 59,23"
+        android:strokeColor="#3E9E63"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round" />
+
+    <!-- Leaves -->
+    <path
+        android:pathData="M54,34 C54,27 59,21 68,20 C69,28 63,34 54,34 Z"
+        android:fillColor="#6FE39B" />
+    <path
+        android:pathData="M53,34 C50,28 44,25 38,26 C40,32 46,35 53,34 Z"
+        android:fillColor="#3E9E63" />
+</vector>
